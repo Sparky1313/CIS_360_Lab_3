@@ -10,7 +10,6 @@ for row in f:
     row = row.split()
     
     if row[0] != "date":
-        if 
         date.append(float(row[0]))
         oxyLvl.append(float(row[1]))
         if float(row[1]) <= 2:

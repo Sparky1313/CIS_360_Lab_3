@@ -11,7 +11,7 @@ with open("./data/raw_data_sta_10.txt", "r") as data_file, open("./data/cleaned_
         else:
             for field in fields:
                 if float(field) < 0:
-                    clean_file.write("0.00\t")
+                    clean_file.write("0.000\t")
                 else:
                     clean_file.write(field + "\t")
             clean_file.write("\n")

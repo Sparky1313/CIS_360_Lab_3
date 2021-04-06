@@ -5,7 +5,6 @@ import numpy as np
 from datetime import datetime, timedelta
 
 
-# FILE_URL = "https://www.glerl.noaa.gov/res/projects/ifyle/data/Mooring/ysi/2007/Y10.txt" # our actual file
 STA_7_FILE_URL = "https://www.glerl.noaa.gov/res/projects/ifyle/data/Mooring/ysi/2007/Y07.txt"
 STA_7_RAW_DATA_FILENAME = "./data/raw_data_sta_7.txt"
 STA_7_CLEANED_DATA_FILENAME = "./data/cleaned_data_sta_7.txt"
@@ -96,30 +95,36 @@ def clean(raw_filename, cleaned_filename):
 def visualize(cleaned_filenames):
     dates = []
     oxy_lvls = []
+    sta_num = [7, 10, 11]
     clrs = ['b', 'g', 'm']
+    i = 0
 
-    data_file = open(CLEANED_DATA_FILE, 'r')
-    for row in data_file:
-        row = row.split()
-        
-        if row[0] != "date":
-            dates.append(float(row[0]))
-            oxy_lvls.append(float(row[1]))
-            # if float(row[1]) <= 2:
-            #     clrs.append('r')
-            # else:
-            #     clrs.append('r')
+    for filename in cleaned_filenames:
+        data_file = open(filename, 'r')
+        for row in data_file:
+            row = row.split()
+            
+            if row[0] != "date":
+                dates.append([])
+                dates[i].append(float(row[0]))
+                oxy_lvls.append([])
+                oxy_lvls[i].append(float(row[1]))
+                # if float(row[1]) <= 2:
+                #     clrs.append('r')
+                # else:
+                #     clrs.append('r')
 
-    plt.plot(dates,oxy_lvls, label="Oxygen level throughout year")
+        plt.plot(dates[i], oxy_lvls[i], color=clrs[i], label="Station " + str(sta_num[i]))
+        i += 1
     # plt.locator_params(axis="x", nbins=10)
-    plt.ylim([0, 15])
+    plt.ylim([0, 20])
     plt.xlim([199, 292])
     # plt.xticks(np.arange(199, 268, 5), rotation="vertical")
     plt.axhline(y=2, color='r', linestyle='-', label="Threshold for hypoxia")
     plt.xlabel('Day of Year (out of 365 days)', fontsize=12)
     plt.ylabel('Oxygen Levels (mg/L)', fontsize=12)
 
-    plt.title('Oxygen Levels at Station 10 in 2007', fontsize=20)
+    plt.title('Oxygen Levels at Stations in 2007', fontsize=20)
     plt.legend()
     plt.show()
 
@@ -133,4 +138,4 @@ while i < len(FILE_URLS):
 
 # time_thing(200.1875)
 # time_thing(200.2083)
-# visualize()
+visualize(CLEANED_FILENAMES)

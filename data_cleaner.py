@@ -6,11 +6,33 @@ from datetime import datetime, timedelta
 
 
 # FILE_URL = "https://www.glerl.noaa.gov/res/projects/ifyle/data/Mooring/ysi/2007/Y10.txt" # our actual file
-FILE_URL = "https://www.glerl.noaa.gov/res/projects/ifyle/data/Mooring/ysi/2007/Y07.txt"
-RAW_DATA_FILE = "./data/raw_data_sta_10.txt"
-CLEANED_DATA_FILE = "./data/cleaned_data_sta_10.txt"
+STA_7_FILE_URL = "https://www.glerl.noaa.gov/res/projects/ifyle/data/Mooring/ysi/2007/Y07.txt"
+STA_7_RAW_DATA_FILENAME = "./data/raw_data_sta_7.txt"
+STA_7_CLEANED_DATA_FILENAME = "./data/cleaned_data_sta_7.txt"
+
+STA_10_FILE_URL = "https://www.glerl.noaa.gov/res/projects/ifyle/data/Mooring/ysi/2007/Y10.txt"
+STA_10_RAW_DATA_FILENAME = "./data/raw_data_sta_10.txt"
+STA_10_CLEANED_DATA_FILENAME = "./data/cleaned_data_sta_10.txt"
+
+STA_11_FILE_URL = "https://www.glerl.noaa.gov/res/projects/ifyle/data/Mooring/ysi/2007/Y11.txt"
+STA_11_RAW_DATA_FILENAME = "./data/raw_data_sta_11.txt"
+STA_11_CLEANED_DATA_FILENAME = "./data/cleaned_data_sta_11.txt"
+
+FILE_URLS = [STA_7_FILE_URL, STA_10_FILE_URL, STA_11_FILE_URL]
+RAW_FILENAMES = [STA_7_RAW_DATA_FILENAME, STA_10_RAW_DATA_FILENAME, STA_11_RAW_DATA_FILENAME]
+CLEANED_FILENAMES = [STA_7_CLEANED_DATA_FILENAME, STA_10_CLEANED_DATA_FILENAME, STA_11_CLEANED_DATA_FILENAME]
+
 
 BASE_DATE = datetime(2007, 1, 1)
+
+
+def extrd_and_clned_chk(url, raw_filename, cleaned_filename):
+    if not os.path.exists(raw_filename):
+        extract(url, raw_filename)
+
+    if not os.path.exists(cleaned_filename):
+        clean(raw_filename, cleaned_filename)
+
 
 def time_thing(date):
     day = int(date) - 1
@@ -22,19 +44,21 @@ def time_thing(date):
         currDatetime = currDatetime.replace(minute=30, second=0, microsecond= 0)
     else:
         currHour = currDatetime.hour
-        currDatetime = currDatetime.replace(hour=currHour + 1, minute=0, second=0, microsecond= 0)
+        currDatetime = currDatetime.replace(hour=currHour + 1,\
+             minute=0, second=0, microsecond= 0)
     print(currDatetime)
 
-def extract():
+def extract(url, raw_filename):
     #add in a try block
-    req = requests.get(FILE_URL, allow_redirects = True)
+    req = requests.get(url, allow_redirects = True)
 
-    with open(RAW_DATA_FILE, "wb") as extract_file:
-        extract_file.write(req.content)
+    with open(raw_filename, "wb") as extracted_file:
+        extracted_file.write(req.content)
 
 
-def clean():
-    with open(RAW_DATA_FILE, "r") as raw_file, open(CLEANED_DATA_FILE, "w") as clean_file:
+def clean(raw_filename, cleaned_filename):
+    with open(raw_filename, "r") as raw_file,\
+         open(cleaned_filename, "w") as cleaned_file:
 
         for line in raw_file:
             fields = line.split()
@@ -42,25 +66,37 @@ def clean():
             if len(fields) == 0 or fields[0] == "YSI":
                 continue
             elif fields[0] == "date":
-                clean_file.write(fields[0] + "\t" + fields[4] + "\n")
+                cleaned_file.write(fields[0] + "\t" + fields[4] + "\n")
             else:
-                clean_file.write(fields[0] + "\t")
-                dissolved_oxy = ""
+                cleaned_file.write(fields[0] + "\t")
+
+                # Measured in mg/L
+                dis_oxy = fields[4]
                 
-                if fields[4] == "-999.000":
-                    dissolved_oxy = "nan"
+                # A reading of -999.000 indicates a missing measurement given by the documentation describing the data.
+                # We decided to allow for a calibration error of 1.000 mg/L after looking through the data.  So if the levels
+                # of dissolved oxygen are below -1.000 mg/L we decided that the reading was bad and indicated a calibration error.
+                # Also, judging from the research we did, a dissolved oxygen concentration of above 20 mg/L should
+                # be extremely rare in a lake if not impossible.  Most sensors won't read above 20 mg/L, so we
+                # added an extra 1 mg/L to that limit to account for calibration errors.  Anything above that we viewed as bad data.
+                if dis_oxy == "-999.000" or float(dis_oxy) < -1.000 or float(dis_oxy) > 21.000:
+                    dis_oxy = "nan"
+
+                # Negative values are not physically possible so we assume that it is 0 mg/L.
                 elif float(fields[4]) < 0:
-                    dissolved_oxy = "0.000"
-                else:
-                    dissolved_oxy = fields[4]
+                    dis_oxy = "0.000"
                 
-                clean_file.write(dissolved_oxy + "\n")
+                # Use the actual reading since it is a good reading.
+                else:
+                    dis_oxy = fields[4]
+                
+                cleaned_file.write(dis_oxy + "\n")
 
 
-def visualize():
+def visualize(cleaned_filenames):
     dates = []
     oxy_lvls = []
-    # clrs = []
+    clrs = ['b', 'g', 'm']
 
     data_file = open(CLEANED_DATA_FILE, 'r')
     for row in data_file:
@@ -77,7 +113,7 @@ def visualize():
     plt.plot(dates,oxy_lvls, label="Oxygen level throughout year")
     # plt.locator_params(axis="x", nbins=10)
     plt.ylim([0, 15])
-    plt.xlim([199, 268])
+    plt.xlim([199, 292])
     # plt.xticks(np.arange(199, 268, 5), rotation="vertical")
     plt.axhline(y=2, color='r', linestyle='-', label="Threshold for hypoxia")
     plt.xlabel('Day of Year (out of 365 days)', fontsize=12)
@@ -88,12 +124,13 @@ def visualize():
     plt.show()
 
 
-if not os.path.exists(RAW_DATA_FILE):
-    extract()
+i = 0
 
-if not os.path.exists(CLEANED_DATA_FILE):
-    clean()
+while i < len(FILE_URLS):
+    extrd_and_clned_chk(FILE_URLS[i], RAW_FILENAMES[i], CLEANED_FILENAMES[i])
+    i += 1
 
-time_thing(200.1875)
-time_thing(200.2083)
-visualize()
+
+# time_thing(200.1875)
+# time_thing(200.2083)
+# visualize()

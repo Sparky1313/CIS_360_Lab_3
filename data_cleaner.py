@@ -2,12 +2,28 @@ import requests
 import os.path
 import matplotlib.pyplot as plt
 import numpy as np
+from datetime import datetime, timedelta
 
 
 # FILE_URL = "https://www.glerl.noaa.gov/res/projects/ifyle/data/Mooring/ysi/2007/Y10.txt" # our actual file
 FILE_URL = "https://www.glerl.noaa.gov/res/projects/ifyle/data/Mooring/ysi/2007/Y07.txt"
 RAW_DATA_FILE = "./data/raw_data_sta_10.txt"
 CLEANED_DATA_FILE = "./data/cleaned_data_sta_10.txt"
+
+BASE_DATE = datetime(2007, 1, 1)
+
+def time_thing(date):
+    day = int(date) - 1
+    currDatetime = BASE_DATE + timedelta(date - 1)
+    
+    if currDatetime.minute < 15:
+        currDatetime = currDatetime.replace(minute=0, second=0, microsecond= 0)
+    elif currDatetime.minute < 45:
+        currDatetime = currDatetime.replace(minute=30, second=0, microsecond= 0)
+    else:
+        currHour = currDatetime.hour
+        currDatetime = currDatetime.replace(hour=currHour + 1, minute=0, second=0, microsecond= 0)
+    print(currDatetime)
 
 def extract():
     #add in a try block
@@ -78,4 +94,6 @@ if not os.path.exists(RAW_DATA_FILE):
 if not os.path.exists(CLEANED_DATA_FILE):
     clean()
 
+time_thing(200.1875)
+time_thing(200.2083)
 visualize()

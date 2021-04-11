@@ -119,9 +119,9 @@ def visualize(cleaned_filenames):
     plt.ylim([0, 20])
 
     plt.xticks(rotation=40)
-   
+    plt.subplots_adjust(bottom=0.2)
     plt.axhline(y=2, color='r', linestyle='-', label="Threshold for hypoxia")
-    plt.xlabel('Day of Year (out of 365 days)', fontsize=12)
+    plt.xlabel('Date', fontsize=12)
     plt.ylabel('Oxygen Levels (mg/L)', fontsize=12)
 
     plt.title('Oxygen Levels at Stations in 2007', fontsize=20)

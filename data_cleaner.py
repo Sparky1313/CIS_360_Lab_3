@@ -1,6 +1,7 @@
 import requests
 import os.path
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import numpy as np
 from datetime import datetime, timedelta
 
@@ -45,7 +46,7 @@ def time_thing(date):
         currHour = currDatetime.hour
         currDatetime = currDatetime.replace(hour=currHour + 1,\
              minute=0, second=0, microsecond= 0)
-    print(currDatetime)
+    return (currDatetime)
 
 def extract(url, raw_filename):
     #add in a try block
@@ -101,25 +102,24 @@ def visualize(cleaned_filenames):
 
     for filename in cleaned_filenames:
         data_file = open(filename, 'r')
+        dates.append([])
         for row in data_file:
             row = row.split()
             
             if row[0] != "date":
-                dates.append([])
-                dates[i].append(float(row[0]))
+                test = time_thing(float(row[0]))
+                dates[i].append(test)
                 oxy_lvls.append([])
                 oxy_lvls[i].append(float(row[1]))
-                # if float(row[1]) <= 2:
-                #     clrs.append('r')
-                # else:
-                #     clrs.append('r')
-
+         
+        
         plt.plot(dates[i], oxy_lvls[i], color=clrs[i], label="Station " + str(sta_num[i]))
         i += 1
     # plt.locator_params(axis="x", nbins=10)
     plt.ylim([0, 20])
-    plt.xlim([199, 292])
-    # plt.xticks(np.arange(199, 268, 5), rotation="vertical")
+
+    plt.xticks(rotation=40)
+   
     plt.axhline(y=2, color='r', linestyle='-', label="Threshold for hypoxia")
     plt.xlabel('Day of Year (out of 365 days)', fontsize=12)
     plt.ylabel('Oxygen Levels (mg/L)', fontsize=12)

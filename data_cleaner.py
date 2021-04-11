@@ -5,7 +5,7 @@ import matplotlib.dates as mdates
 import numpy as np
 from datetime import datetime, timedelta
 
-
+#Grab data from 3 Stations
 STA_7_FILE_URL = "https://www.glerl.noaa.gov/res/projects/ifyle/data/Mooring/ysi/2007/Y07.txt"
 STA_7_RAW_DATA_FILENAME = "./data/raw_data_sta_7.txt"
 STA_7_CLEANED_DATA_FILENAME = "./data/cleaned_data_sta_7.txt"
@@ -22,10 +22,10 @@ FILE_URLS = [STA_7_FILE_URL, STA_10_FILE_URL, STA_11_FILE_URL]
 RAW_FILENAMES = [STA_7_RAW_DATA_FILENAME, STA_10_RAW_DATA_FILENAME, STA_11_RAW_DATA_FILENAME]
 CLEANED_FILENAMES = [STA_7_CLEANED_DATA_FILENAME, STA_10_CLEANED_DATA_FILENAME, STA_11_CLEANED_DATA_FILENAME]
 
-
+#start date for visualization 
 BASE_DATE = datetime(2007, 1, 1)
 
-
+#Grab the raw data
 def extrd_and_clned_chk(url, raw_filename, cleaned_filename):
     if not os.path.exists(raw_filename):
         extract(url, raw_filename)
@@ -33,8 +33,8 @@ def extrd_and_clned_chk(url, raw_filename, cleaned_filename):
     if not os.path.exists(cleaned_filename):
         clean(raw_filename, cleaned_filename)
 
-
-def time_thing(date):
+#Take the data day information, currently set as a day in the year - convert into typical date format
+def convert_day_to_date(date):
     day = int(date) - 1
     currDatetime = BASE_DATE + timedelta(date - 1)
     
@@ -55,7 +55,7 @@ def extract(url, raw_filename):
     with open(raw_filename, "wb") as extracted_file:
         extracted_file.write(req.content)
 
-
+#Format raw data into data we wish to visualize 
 def clean(raw_filename, cleaned_filename):
     with open(raw_filename, "r") as raw_file,\
          open(cleaned_filename, "w") as cleaned_file:
@@ -92,7 +92,7 @@ def clean(raw_filename, cleaned_filename):
                 
                 cleaned_file.write(dis_oxy + "\n")
 
-
+#display clean data
 def visualize(cleaned_filenames):
     dates = []
     oxy_lvls = []
@@ -107,35 +107,28 @@ def visualize(cleaned_filenames):
             row = row.split()
             
             if row[0] != "date":
-                test = time_thing(float(row[0]))
-                dates[i].append(test)
+                dates[i].append(convert_day_to_date(float(row[0])))
                 oxy_lvls.append([])
                 oxy_lvls[i].append(float(row[1]))
          
         
         plt.plot(dates[i], oxy_lvls[i], color=clrs[i], label="Station " + str(sta_num[i]))
         i += 1
-    # plt.locator_params(axis="x", nbins=10)
     plt.ylim([0, 20])
-
     plt.xticks(rotation=40)
     plt.subplots_adjust(bottom=0.2)
     plt.axhline(y=2, color='r', linestyle='-', label="Threshold for hypoxia")
     plt.xlabel('Date', fontsize=12)
     plt.ylabel('Oxygen Levels (mg/L)', fontsize=12)
-
     plt.title('Oxygen Levels at Stations in 2007', fontsize=20)
     plt.legend()
     plt.show()
 
-
+#Going through and making sure files are cleaned 
 i = 0
-
 while i < len(FILE_URLS):
     extrd_and_clned_chk(FILE_URLS[i], RAW_FILENAMES[i], CLEANED_FILENAMES[i])
     i += 1
 
-
-# time_thing(200.1875)
-# time_thing(200.2083)
+#run code
 visualize(CLEANED_FILENAMES)
